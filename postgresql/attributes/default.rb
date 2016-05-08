@@ -57,8 +57,12 @@ when "fedora"
 
 when "redhat", "centos", "scientific"
 
-  set[:postgresql][:repo_version] = "8.1"
-  default[:postgresql][:version] = "8.1"
+  case
+  when platform_version.to_f <= 6.7
+    set[:postgresql][:repo_version] = "9.1"
+    default[:postgresql][:version] = "9.1"
+  end
+
   default[:postgresql][:dir] = "/var/lib/pgsql/data"
 
 when "suse"
