@@ -60,6 +60,7 @@ when "redhat", "centos", "scientific"
   case
   when platform_version.to_f <= 6.7
     default[:postgresql][:version] = "9.1"
+    set[:postgresql][:repo_version] = "9.1"
   end
 
   default[:postgresql][:dir] = "/var/lib/pgsql/#{node[:postgresql][:version]}/data"

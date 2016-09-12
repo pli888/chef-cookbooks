@@ -42,17 +42,21 @@ user "postgres" do
   supports :manage_home => false
 end
 
-if node[:postgresql][:version] == node[:postgresql][:repo_version]
-  package "postgresql-server"
-else
-  package "postgresql#{node[:postgresql][:version].split('.').join}-server"
-end
+# if node[:postgresql][:version] == node[:postgresql][:repo_version]
+#  package "postgresql-server"
+# else
+#  package "postgresql#{node[:postgresql][:version].split('.').join}-server"
+# end
 
-if node[:postgresql][:version] == node[:postgresql][:repo_version]
-  service_pg = "postgresql"
-else
-  service_pg = "postgresql-#{node[:postgresql][:version]}"
-end
+package "postgresql#{node[:postgresql][:version].split('.').join}-server"
+
+# if node[:postgresql][:version] == node[:postgresql][:repo_version]
+#  service_pg = "postgresql"
+# else
+#  service_pg = "postgresql-#{node[:postgresql][:version]}"
+# end
+
+service_pg = "postgresql-#{node[:postgresql][:version]}"
 
 if node[:postgresql][:is_slave]
   execute "pg_basebackup -h #{node[:postgresql][:master_host]} -D . -U replication --xlog" do
