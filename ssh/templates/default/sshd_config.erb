@@ -28,7 +28,7 @@ LogLevel INFO
 
 # Authentication:
 LoginGraceTime 120
-PermitRootLogin yes
+PermitRootLogin no
 StrictModes yes
 
 RSAAuthentication yes
@@ -83,7 +83,7 @@ AllowGroups <%= ssh[:allow_groups].join(' ') %>
 
 <% if not node[:ssh][:sftp][:users].empty? -%>
 Match Group <%= ssh[:sftp][:group] %>
-    PasswordAuthentication yes
+    PasswordAuthentication no
     ChrootDirectory "<%= ssh[:sftp][:dir] %>/%u"
     ForceCommand internal-sftp
 <% end -%>
