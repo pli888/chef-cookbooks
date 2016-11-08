@@ -1,8 +1,8 @@
 #
-# Cookbook Name:: apt
-# Resource:: preference
+# Cookbook Name:: apt_test
+# Recipe:: base
 #
-# Copyright 2010-2016, Chef Software, Inc.
+# Copyright 2016, Chef Software, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,15 +17,18 @@
 # limitations under the License.
 #
 
-actions :add, :remove
-default_action :add
+apt_update 'update'
 
-state_attrs :glob,
-            :package_name,
-            :pin,
-            :pin_priority
+# without this dist data won't be populated by Ohai in docker
+if platform?('debian')
+  package 'lsb-release' do
+    action :install
+    notifies :reload, 'ohai[reload_ohai]', :immediately
+  end
 
-attribute :package_name, kind_of: String, name_attribute: true, regex: [/^([a-z]|[A-Z]|[0-9]|_|-|\.|\*|\+)+$/]
-attribute :glob, kind_of: String
-attribute :pin, kind_of: String
-attribute :pin_priority, kind_of: String
+  ohai 'reload_ohai' do
+    action :nothing
+  end
+end
+
+include_recipe 'apt::default'
