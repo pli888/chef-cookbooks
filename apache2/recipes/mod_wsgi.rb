@@ -1,8 +1,8 @@
 #
 # Cookbook Name:: apache2
-# Recipe:: python 
+# Recipe:: mod_wsgi
 #
-# Copyright 2008-2009, Opscode, Inc.
+# Copyright 2008-2013, Chef Software, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,11 +17,17 @@
 # limitations under the License.
 #
 
-case node['platform']
-when "debian","ubuntu"
-  package "libapache2-mod-wsgi"
-when "redhat", "centos", "scientific", "fedora", "arch", "amazon"
-  package "mod_wsgi"
+case node['platform_family']
+when 'debian'
+  package 'libapache2-mod-wsgi'
+when 'rhel', 'fedora', 'arch'
+  package 'mod_wsgi' do
+    notifies :run, 'execute[generate-module-list]', :immediately
+  end
 end
 
-apache_module "wsgi"
+file "#{node['apache']['dir']}/conf.d/wsgi.conf" do
+  content '# conf is under mods-available/wsgi.conf - apache2 cookbook\n'
+end
+
+apache_module 'wsgi'

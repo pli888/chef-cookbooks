@@ -1,10 +1,10 @@
 #
 # Cookbook Name:: apache2
-# Recipe:: perl 
+# Recipe:: mod_perl
 #
 # adapted from the mod_python recipe by Jeremy Bingham
 #
-# Copyright 2008-2009, Opscode, Inc.
+# Copyright 2008-2013, Chef Software, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,21 +19,40 @@
 # limitations under the License.
 #
 
-case node['platform']
-  when "debian", "ubuntu"
-    %w{libapache2-mod-perl2 libapache2-request-perl apache2-mpm-prefork}.each do |pkg|
-      package pkg do
-        action :install
-      end
-    end
-  when "centos", "redhat", "fedora", "amazon", "scientific"
-    package "mod_perl" do
-      action :install
-      notifies :run, resources(:execute => "generate-module-list"), :immediately
-    end
-    package "perl-libapreq2" do
-      action :install
-    end
+case node['platform_family']
+when 'debian'
+  %w(libapache2-mod-perl2 libapache2-request-perl).each do |pkg|
+    package pkg
+  end
+  if node['platform'] == 'ubuntu' && node['platform_version'].to_f <= 14.04
+    package 'apache2-mpm-prefork'
+  end
+  if node['platform'] == 'debian' && node['platform_version'].to_f <= 8
+    package 'apache2-mpm-prefork'
+  end
+when 'suse'
+  package 'apache2-mod_perl' do
+    notifies :run, 'execute[generate-module-list]', :immediately
+  end
+
+  package 'perl-Apache2-Request'
+when 'rhel', 'fedora'
+  package 'mod_perl' do
+    notifies :run, 'execute[generate-module-list]', :immediately
+  end
+
+  package 'perl-libapreq2'
+when 'freebsd'
+  if node['apache']['version'] == '2.4'
+    package 'ap24-mod_perl2'
+  else
+    package 'ap22-mod_perl2'
+  end
+  package 'p5-libapreq2'
 end
 
-apache_module "perl"
+file "#{node['apache']['dir']}/conf.d/perl.conf" do
+  content '# conf is under mods-available/perl.conf - apache2 cookbook\n'
+end
+
+apache_module 'perl'

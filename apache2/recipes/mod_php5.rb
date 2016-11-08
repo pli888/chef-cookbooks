@@ -1,8 +1,10 @@
 #
 # Cookbook Name:: apache2
-# Recipe:: php5 
+# Recipe:: mod_php5
 #
-# Copyright 2008-2009, Opscode, Inc.
+# Copyright 2008-2013, Chef Software, Inc.
+# Copyright 2014, OneHealth Solutions, Inc.
+# Copyright 2014, Viverae, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,84 +18,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-case node['platform']
-when "debian", "ubuntu"
-  package "libapache2-mod-php5" do
-    action :install
-  end  
-
-when "arch"
-  package "php-apache" do
-    action :install
-    notifies :run, resources(:execute => "generate-module-list"), :immediately
-  end
-
-when "amazon", "redhat", "centos", "scientific"
-  package "php package" do
-    if node['platform_version'].to_f < 6.0
-      package_name "php53"
-    else
-      package_name "php"
-    end
-    action :install
-    notifies :run, resources(:execute => "generate-module-list"), :immediately
-    not_if "which php"
-  end
-
-  # delete stock config
-  file "#{node['apache']['dir']}/conf.d/php.conf" do
-    action :delete
-  end
-
-  # replace with debian style config
-  template "#{node['apache']['dir']}/mods-available/php5.conf" do
-    source "mods/php5.conf.erb" 
-    notifies :restart, "service[apache2]"
-  end
-
-when "fedora"
-  package "php package" do
-    package_name "php"
-    action :install
-    notifies :run, resources(:execute => "generate-module-list"), :immediately
-    not_if "which php"
-  end
-
-  # delete stock config
-  file "#{node['apache']['dir']}/conf.d/php.conf" do
-    action :delete
-  end
-
-  # replace with debian style config
-  template "#{node['apache']['dir']}/mods-available/php5.conf" do
-    source "mods/php5.conf.erb" 
-    notifies :restart, "service[apache2]"
-  end
-
-when "freebsd"
-  freebsd_port_options "php5" do
-    options "APACHE" => true
-    action :create
-  end
-
-  package "php package" do
-     package_name "php5"
-     source "ports"
-     action :install
-     notifies :run, resources(:execute => "generate-module-list"), :immediately
-  end
-
-  # replace with debian style config
-  template "#{node['apache']['dir']}/mods-available/php5.conf" do
-    source "mods/php5.conf.erb"
-    notifies :restart, "service[apache2]"
-  end
-end
-
-apache_module "php5" do
-  case node['platform']
-  when "redhat","centos","scientific","amazon","fedora","freebsd"
-    filename "libphp5.so"
-  end
-end
+log 'apache2::mod_php5 is deprecated in favor of apache2::mod_php. Please adjust your cookbooks'
+include_recipe 'apache2::mod_php'
