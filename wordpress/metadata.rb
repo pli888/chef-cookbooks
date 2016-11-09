@@ -1,74 +1,100 @@
-name "wordpress"
-maintainer       "Barry Steinglass"
+name             "wordpress"
+maintainer       "Brint O'Hearn"
 maintainer_email "cookbooks@opscode.com"
 license          "Apache 2.0"
-description      "Installs/Configures wordpress"
+description      "Installs/Configures WordPress"
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
-version          "0.8.8"
+version          "3.0.0"
 
-recipe "wordpress", "Installs and configures wordpress LAMP stack on a single system"
+recipe "WordPress", "Installs and configures WordPress LAMP stack on a single system"
+recipe "WordPress::languages", "Install WordPress translation files"
 
 %w{ php openssl }.each do |cb|
   depends cb
 end
 
-depends "mysql", ">= 1.0.5"
+depends "apache2", ">= 2.0.0"
+depends "database", ">= 1.6.0"
+depends "mysql", ">= 6.0"
+depends "mysql2_chef_gem", "~> 1.0.1"
+# depends "build-essential"
+depends "iis", ">= 1.6.2"
+depends "tar", ">= 0.3.1"
+depends "nginx", "~> 2.7.4"
+depends "php-fpm", "~> 0.6.10"
+depends 'selinux', '~> 0.7'
 
-%w{ debian ubuntu }.each do |os|
+%w{ debian ubuntu windows centos redhat scientific oracle }.each do |os|
   supports os
 end
 
-attribute "wordpress/version",
-  :display_name => "Wordpress download version",
-  :description => "Version of Wordpress to download from the Wordpress site.",
-  :default => "3.0.4"
+attribute "WordPress/version",
+  :display_name => "WordPress download version",
+  :description => "Version of WordPress to download from the WordPress site or 'latest' for the current release.",
+  :default => "latest"
 
-attribute "wordpress/checksum",
-  :display_name => "Wordpress tarball checksum",
+attribute "WordPress/checksum",
+  :display_name => "WordPress tarball checksum",
   :description => "Checksum of the tarball for the version specified.",
-  :default => "7342627f4a3dca44886c5aca6834cc88671dbd3aa2760182d2fcb9a330807"
+  :default => ""
 
-attribute "wordpress/dir",
-  :display_name => "Wordpress installation directory",
-  :description => "Location to place wordpress files.",
-  :default => "/var/www"
+attribute "WordPress/dir",
+  :display_name => "WordPress installation directory",
+  :description => "Location to place WordPress files.",
+  :default => "/var/www/wordpress"
 
-attribute "wordpress/db/database",
-  :display_name => "Wordpress MySQL database",
-  :description => "Wordpress will use this MySQL database to store its data.",
+attribute "WordPress/db/database",
+  :display_name => "WordPress MySQL database",
+  :description => "WordPress will use this MySQL database to store its data.",
   :default => "wordpressdb"
 
-attribute "wordpress/db/user",
-  :display_name => "Wordpress MySQL user",
-  :description => "Wordpress will connect to MySQL using this user.",
+attribute "WordPress/db/user",
+  :display_name => "WordPress MySQL user",
+  :description => "WordPress will connect to MySQL using this user.",
   :default => "wordpressuser"
 
-attribute "wordpress/db/password",
-  :display_name => "Wordpress MySQL password",
-  :description => "Password for the Wordpress MySQL user.",
+attribute "WordPress/db/password",
+  :display_name => "WordPress MySQL password",
+  :description => "Password for the WordPress MySQL user.",
   :default => "randomly generated"
 
-attribute "wordpress/keys/auth",
-  :display_name => "Wordpress auth key",
-  :description => "Wordpress auth key.",
+attribute "WordPress/keys/auth",
+  :display_name => "WordPress auth key",
+  :description => "WordPress auth key.",
   :default => "randomly generated"
 
-attribute "wordpress/keys/secure_auth",
-  :display_name => "Wordpress secure auth key",
-  :description => "Wordpress secure auth key.",
+attribute "WordPress/keys/secure_auth",
+  :display_name => "WordPress secure auth key",
+  :description => "WordPress secure auth key.",
   :default => "randomly generated"
 
-attribute "wordpress/keys/logged_in",
-  :display_name => "Wordpress logged-in key",
-  :description => "Wordpress logged-in key.",
+attribute "WordPress/keys/logged_in",
+  :display_name => "WordPress logged-in key",
+  :description => "WordPress logged-in key.",
   :default => "randomly generated"
 
-attribute "wordpress/keys/nonce",
-  :display_name => "Wordpress nonce key",
-  :description => "Wordpress nonce key.",
+attribute "WordPress/keys/nonce",
+  :display_name => "WordPress nonce key",
+  :description => "WordPress nonce key.",
   :default => "randomly generated"
 
-attribute "wordpress/server_aliases",
-  :display_name => "Wordpress Server Aliases",
-  :description => "Wordpress Server Aliases",
+attribute "WordPress/server_aliases",
+  :display_name => "WordPress Server Aliases",
+  :description => "WordPress Server Aliases",
   :default => "FQDN"
+
+attribute "WordPress/languages/lang",
+  :display_name => "WordPress WPLANG configulation value",
+  :description => "WordPress WPLANG configulation value",
+  :default => ""
+
+attribute "WordPress/languages/version",
+  :display_name => "Version of WordPress translation file",
+  :description => "Version of WordPress translation file",
+  :default => ""
+
+attribute "WordPress/languages/projects",
+  :display_name => "WordPress translation projects",
+  :description => "WordPress translation projects",
+  :type => "array",
+  :default => ["main", "admin", "admin/network", "cc"]
