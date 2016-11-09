@@ -1,21 +1,37 @@
-unless node[:sysctl][:params][:kernel][:shmmax] >= 67108864 # 64MB
-    raise 'node[:sysctl][:params][:kernel][:shmmax] has to be 67108864 (64MB) or more!'
-end
+#
+# Cookbook Name:: postgresql
+# Recipe:: client
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 
-include_recipe 'sysctl'
+include_recipe 'postgresql::ca_certificates'
 
-case node[:platform_family]
-when 'rhel'
-    include_recipe 'postgresql::client_redhat'
+case node['platform_family']
 when 'debian'
-    include_recipe 'postgresql::client_debian'
+  if node['postgresql']['version'].to_f > 9.3
+    node.normal['postgresql']['enable_pgdg_apt'] = true
+  end
+
+  if node['postgresql']['enable_pgdg_apt']
+    include_recipe 'postgresql::apt_pgdg_postgresql'
+  end
+when 'rhel'
+  if node['postgresql']['enable_pgdg_yum']
+    include_recipe 'postgresql::yum_pgdg_postgresql'
+  end
 end
 
-# TODO HXP: This is only needed when using pgdg. However, packages in pgdg use
-# update-alternatives so the right way is `sudo update-alternatives --set
-# pgsql-pg_dumpall /usr/pgsql-9.2/bin/pg_dumpall`. Also, for some reason
-# pg_config is not managed by update-alternatives.
-link '/usr/bin/pg_config' do
-    to "/usr/pgsql-#{node[:postgresql][:version]}/bin/pg_config"
-    not_if { File.exist?('/usr/bin/pg_config') }
+node['postgresql']['client']['packages'].each do |pkg|
+  package pkg
 end

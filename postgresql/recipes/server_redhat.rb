@@ -2,10 +2,6 @@
 # Cookbook Name:: postgresql
 # Recipe:: server
 #
-# Author:: Joshua Timberman (<joshua@opscode.com>)
-# Author:: Lamont Granquist (<lamont@opscode.com>)
-# Copyright 2009-2011, Opscode, Inc.
-#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -19,75 +15,119 @@
 # limitations under the License.
 #
 
-include_recipe "postgresql::client"
+include_recipe 'postgresql::client'
 
+svc_name = node['postgresql']['server']['service_name']
+initdb_locale = node['postgresql']['initdb_locale']
 
-pg_dir = node[:postgresql][:dir]
-
+shortver = node['postgresql']['version'].split('.').join
 
 # Create a group and user like the package will.
 # Otherwise the templates fail.
 
-group "postgres" do
-  gid 26
+group 'postgres' do
+  gid node['postgresql']['gid']
 end
 
-user "postgres" do
-  shell "/bin/bash"
-  comment "PostgreSQL Server"
-  home "/var/lib/pgsql"
-  gid "postgres"
+user 'postgres' do
+  shell '/bin/bash'
+  comment 'PostgreSQL Server'
+  home '/var/lib/pgsql'
+  gid 'postgres'
   system true
-  uid 26
-  supports :manage_home => false
+  uid node['postgresql']['uid']
+  manage_home false
 end
 
-# if node[:postgresql][:version] == node[:postgresql][:repo_version]
-#  package "postgresql-server"
-# else
-#  package "postgresql#{node[:postgresql][:version].split('.').join}-server"
-# end
+directory node['postgresql']['config']['data_directory'] do
+  owner 'postgres'
+  group 'postgres'
+  recursive true
+  action :create
+end
 
-package "postgresql#{node[:postgresql][:version].split('.').join}-server"
+node['postgresql']['server']['packages'].each do |pg_pack|
+  package pg_pack
+end
 
-# if node[:postgresql][:version] == node[:postgresql][:repo_version]
-#  service_pg = "postgresql"
-# else
-#  service_pg = "postgresql-#{node[:postgresql][:version]}"
-# end
-
-service_pg = "postgresql-#{node[:postgresql][:version]}"
-
-if node[:postgresql][:is_slave]
-  execute "pg_basebackup -h #{node[:postgresql][:master_host]} -D . -U replication --xlog" do
-    cwd pg_dir
-    user "postgres"
-    not_if { ::FileTest.exist?(File.join(pg_dir, "PG_VERSION")) }
+# If using PGDG, add symlinks so that downstream commands all work
+if node['postgresql']['enable_pgdg_yum'] == true || node['postgresql']['use_pgdg_packages'] == true
+  [
+    "postgresql#{shortver}-setup",
+    "postgresql#{shortver}-check-db-dir"
+  ].each do |cmd|
+    link "/usr/bin/#{cmd}" do
+      to "/usr/pgsql-#{node['postgresql']['version']}/bin/#{cmd}"
+    end
   end
+end
+
+# The systemd unit file does not support 'initdb' or 'upgrade' actions.
+# Use the postgresql-setup script instead.
+
+unless node['postgresql']['server']['init_package'] == 'systemd'
+
+  directory '/etc/sysconfig/pgsql' do
+    mode '0644'
+    recursive true
+    action :create
+  end
+
+  template "/etc/sysconfig/pgsql/#{svc_name}" do
+    source 'pgsql.sysconfig.erb'
+    mode '0644'
+    notifies :restart, 'service[postgresql]', :delayed
+  end
+
+end
+
+if node['postgresql']['server']['init_package'] == 'systemd'
+
+  if node['platform_family'] == 'rhel'
+    template '/etc/systemd/system/postgresql.service' do
+      source 'postgresql.service.erb'
+      owner 'root'
+      group 'root'
+      mode '0644'
+      notifies :run, 'execute[systemctl-reload]', :immediately
+      notifies :reload, 'service[postgresql]', :delayed
+    end
+    execute 'systemctl-reload' do
+      command 'systemctl daemon-reload'
+      action :nothing
+    end
+  end
+
+  case node['platform_family']
+  when 'suse'
+    execute "initdb -d #{node['postgresql']['dir']}" do
+      user 'postgres'
+      not_if { ::File.exist?("#{node['postgresql']['config']['data_directory']}/PG_VERSION") }
+    end
+  else
+    execute "#{node['postgresql']['setup_script']} initdb #{svc_name}" do
+      not_if { ::File.exist?("#{node['postgresql']['config']['data_directory']}/PG_VERSION") }
+    end
+  end
+
+elsif !platform_family?('suse') && node['postgresql']['version'].to_f <= 9.3
+
+  execute "/sbin/service #{svc_name} initdb #{initdb_locale}" do
+    not_if { ::File.exist?("#{node['postgresql']['config']['data_directory']}/PG_VERSION") }
+  end
+
 else
-  execute "/sbin/service #{service_pg} initdb" do
-    not_if { ::FileTest.exist?(File.join(pg_dir, "PG_VERSION")) }
+
+  execute "/sbin/service #{svc_name} initdb" do
+    not_if { ::File.exist?("#{node['postgresql']['config']['data_directory']}/PG_VERSION") }
   end
+
 end
 
-template "#{pg_dir}/postgresql.conf" do
-  source "redhat.postgresql.conf.erb"
-  owner "postgres"
-  group "postgres"
-  mode '600'
-  notifies :restart, "service[postgresql]"
-end
-
-template "#{pg_dir}/recovery.conf" do
-  source "recovery.conf.erb"
-  owner "postgres"
-  group "postgres"
-  mode '600'
-  only_if { node[:postgresql][:is_slave] }
-end
-
-service "postgresql" do
-  service_name service_pg
-  supports :restart => true, :status => true, :reload => true
+service 'postgresql' do
+  service_name svc_name
+  supports restart: true, status: true, reload: true
   action [:enable, :start]
 end
+
+include_recipe 'postgresql::server_conf'
