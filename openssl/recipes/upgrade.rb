@@ -1,8 +1,8 @@
 #
 # Cookbook Name:: openssl
-# Recipe:: default
+# Recipe:: upgrade
 #
-# Copyright 2009-2016, Chef Software, Inc.
+# Copyright 2015-2016, Chef Software, Inc. <legal@chef.io>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,3 +16,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+case node['platform_family']
+when 'debian', 'ubuntu'
+  packages = %w(libssl1.0.0 openssl)
+when 'rhel', 'fedora', 'suse'
+  packages = %w(openssl)
+else
+  packages = []
+end
+
+packages.each do |ssl_pkg|
+  package ssl_pkg do
+    action :upgrade
+    node['openssl']['restart_services'].each do |ssl_svc|
+      notifies :restart, "service[#{ssl_svc}]"
+    end
+  end
+end

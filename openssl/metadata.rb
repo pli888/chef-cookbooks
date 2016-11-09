@@ -1,9 +1,15 @@
-name "openssl"
-maintainer       "Opscode, Inc."
-maintainer_email "cookbooks@opscode.com"
-license          "Apache 2.0"
-description      "Provides a library with a method for generating secure random passwords."
+name             'openssl'
+maintainer       'Chef Software, Inc.'
+maintainer_email 'cookbooks@chef.io'
+license          'Apache 2.0'
+description      'Provides a library with a method for generating secure random passwords.'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
-version          "1.0.0"
+version '6.0.0'
 
-recipe "openssl", "Empty, this cookbook provides a library, see README.md"
+recipe 'openssl', 'Empty, this cookbook provides a library, see README.md'
+recipe 'upgrade', 'Upgrade OpenSSL library and restart dependent services'
+
+source_url 'https://github.com/chef-cookbooks/openssl'
+issues_url 'https://github.com/chef-cookbooks/openssl/issues'
+
+# chef_version '>= 12.1'
