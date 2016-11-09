@@ -1,10 +1,10 @@
 #
-# Author::  Joshua Timberman (<joshua@opscode.com>)
-# Author::  Seth Chisamore (<schisamo@opscode.com>)
+# Author::  Joshua Timberman (<joshua@chef.io>)
+# Author::  Seth Chisamore (<schisamo@chef.io>)
 # Cookbook Name:: php
 # Recipe:: module_ldap
 #
-# Copyright 2009-2011, Opscode, Inc.
+# Copyright 2009-2016, Chef Software, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,9 +20,12 @@
 #
 
 pkg = value_for_platform(
-    [ "centos", "redhat", "fedora" ] => {"default" => "php53-ldap"}, 
-    "default" => "php5-ldap"
-  )
+  %w(centos redhat scientific fedora amazon oracle) => {
+    el5_range => 'php53-ldap',
+    'default' => 'php-ldap'
+  },
+  'default' => node['php']['ldap']['package']
+)
 
 package pkg do
   action :install

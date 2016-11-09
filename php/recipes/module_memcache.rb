@@ -1,10 +1,10 @@
 #
-# Author::  Joshua Timberman (<joshua@opscode.com>)
-# Author::  Seth Chisamore (<schisamo@opscode.com>)
+# Author::  Joshua Timberman (<joshua@chef.io>)
+# Author::  Seth Chisamore (<schisamo@chef.io>)
 # Cookbook Name:: php
 # Recipe:: module_memcache
 #
-# Copyright 2009-2011, Opscode, Inc.
+# Copyright 2009-2016, Chef Software, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,19 +19,13 @@
 # limitations under the License.
 #
 
-case node['platform']
-when "centos", "redhat", "fedora"
-  %w{ zlib-devel }.each do |pkg|
-    package pkg do
-      action :install
-    end
-  end
-  php_pear "memcache" do
-    action :install
-    #directives(:shm_size => "128M", :enable_cli => 0)
-  end
-when "debian", "ubuntu"
-  package "php5-memcache" do
+case node['platform_family']
+when 'rhel', 'fedora'
+  package 'zlib-devel'
+
+  php_pear 'memcache' do
     action :install
   end
+when 'debian'
+  package 'php5-memcache'
 end
