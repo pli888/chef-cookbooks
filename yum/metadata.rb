@@ -1,12 +1,14 @@
-name              'yum'
-maintainer        'Chef'
-maintainer_email  'cookbooks@getchef.com'
-license           'Apache 2.0'
-description       'Configures various yum components on Red Hat-like systems'
-long_description  IO.read(File.join(File.dirname(__FILE__), 'README.md'))
-version           '3.1.7'
+name 'yum'
+maintainer 'Chef Software, Inc.'
+maintainer_email 'cookbooks@chef.io'
+license 'Apache 2.0'
+description 'Configures various yum components on Red Hat-like systems'
+version '4.1.0'
 
-supports 'redhat'
-supports 'centos'
-supports 'amazon'
-supports 'fedora'
+%w(amazon centos fedora oracle redhat scientific zlinux).each do |os|
+  supports os
+end
+
+source_url 'https://github.com/chef-cookbooks/yum'
+issues_url 'https://github.com/chef-cookbooks/yum/issues'
+# chef_version '>= 12'

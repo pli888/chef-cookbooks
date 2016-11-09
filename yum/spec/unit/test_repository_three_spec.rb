@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe 'yum_test::test_repository_three' do
   let(:test_repository_three_run) do
-    ChefSpec::Runner.new(
-      :step_into => 'yum_repository'
-      ).converge(described_recipe)
+    ChefSpec::SoloRunner.new(
+      step_into: 'yum_repository'
+    ).converge(described_recipe)
   end
 
   let(:test_repository_three_template) do
@@ -20,7 +20,6 @@ name=an test
 baseurl=http://drop.the.baseurl.biz
 enabled=1
 gpgcheck=1
-sslverify=1
 '
   end
 
@@ -35,6 +34,10 @@ sslverify=1
 
     it 'steps into yum_repository and renders file[/etc/yum.repos.d/test3.repo]' do
       expect(test_repository_three_run).to render_file('/etc/yum.repos.d/test3.repo').with_content(test_repository_three_content)
+    end
+
+    it 'steps into yum_repository and runs execute[yum clean metadata test3]' do
+      expect(test_repository_three_run).to_not run_execute('yum clean metadata test3')
     end
 
     it 'steps into yum_repository and runs execute[yum-makecache-test3]' do

@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe 'yum_test::test_repository_eight' do
   let(:test_repository_eight_run) do
-    ChefSpec::Runner.new(
-      :step_into => 'yum_repository'
-      ).converge(described_recipe)
+    ChefSpec::SoloRunner.new(
+      step_into: 'yum_repository'
+    ).converge(described_recipe)
   end
 
   let(:test_repository_eight_template) do
@@ -21,18 +21,38 @@ Have a nice day.
   context 'creating a yum_repository with minimal parameters' do
     it 'creates yum_repository[test8]' do
       expect(test_repository_eight_run).to create_yum_repository('test8')
+        .with(
+          source: 'custom_template.erb',
+          description: 'an test',
+          baseurl: 'http://drop.the.baseurl.biz'
+        )
     end
 
     it 'steps into yum_repository and creates template[/etc/yum.repos.d/test8.repo]' do
       expect(test_repository_eight_run).to create_template('/etc/yum.repos.d/test8.repo')
+        .with(
+          path: '/etc/yum.repos.d/test8.repo',
+          source: 'custom_template.erb'
+        )
     end
 
     it 'steps into yum_repository and renders file[/etc/yum.repos.d/test8.repo]' do
-      expect(test_repository_eight_run).to render_file('/etc/yum.repos.d/test8.repo').with_content(test_repository_eight_content)
+      expect(test_repository_eight_run).to render_file('/etc/yum.repos.d/test8.repo')
+        .with_content(test_repository_eight_content)
+    end
+
+    it 'steps into yum_repository and runs execute[yum clean metadata test8]' do
+      expect(test_repository_eight_run).to_not run_execute('yum clean metadata test8')
+        .with(
+          command: 'yum clean metadata --disablerepo=* --enablerepo=test8'
+        )
     end
 
     it 'steps into yum_repository and runs execute[yum-makecache-test8]' do
       expect(test_repository_eight_run).to_not run_execute('yum-makecache-test8')
+        .with(
+          command: 'yum -q makecache --disablerepo=* --enablerepo=test8'
+        )
     end
 
     it 'steps into yum_repository and runs ruby_block[yum-cache-reload-test8]' do
@@ -47,5 +67,4 @@ Have a nice day.
       expect(test_repository_eight_template).to notify('ruby_block[yum-cache-reload-test8]')
     end
   end
-
 end

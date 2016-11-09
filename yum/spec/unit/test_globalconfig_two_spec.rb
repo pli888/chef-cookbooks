@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe 'yum_test::test_globalconfig_two' do
   let(:test_globalconfig_two_run) do
-    ChefSpec::Runner.new(
-      :step_into => 'yum_globalconfig'
-      ).converge(described_recipe)
+    ChefSpec::SoloRunner.new(
+      step_into: 'yum_globalconfig'
+    ).converge(described_recipe)
   end
 
   let(:test_globalconfig_two_content) do
@@ -44,21 +44,21 @@ group_package_types=default mandatory
 history_list_view=commands
 history_record=true
 history_record_packages=rpm
-http_caching=true
+http_caching=all
 installonly_limit=3
 installonlypkgs=kernel, emacs-nox
 installroot=/over/there
 keepalive=true
 keepcache=1
 kernelpkgnames=dowhatnow
-localpkg_gpgcheck=true
+localpkg_gpgcheck=1
 logfile=/your/logs/here
 max_retries=10
 mdpolicy=instant
 metadata_expire=21600
 mirrorlist_expire=21600
 multilib_policy=best
-obsoletes=1
+obsoletes=0
 overwrite_groups=true
 password=ohai
 persistdir=/somewhere/good
