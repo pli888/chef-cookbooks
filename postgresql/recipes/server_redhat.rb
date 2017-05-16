@@ -39,7 +39,7 @@ user "postgres" do
   gid "postgres"
   system true
   uid 26
-  supports :manage_home => false
+#  supports :manage_home => false
 end
 
 # if node[:postgresql][:version] == node[:postgresql][:repo_version]

@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 
-case platform
+case node["platform"]
 when "debian"
 
   if platform_version.to_f == 5.0
@@ -58,7 +58,7 @@ when "fedora"
 when "redhat", "centos", "scientific"
 
   case
-  when platform_version.to_f <= 6.7
+  when node["platform_version"].to_f <= 6.7
     default[:postgresql][:version] = "9.1"
     set[:postgresql][:repo_version] = "9.1"
   end
